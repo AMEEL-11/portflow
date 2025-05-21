@@ -10,41 +10,60 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useAuth } from "@/components/auth-provider"
+import { createSupabaseClient } from "@/lib/supabase"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const router = useRouter()
+  const { signIn, loading } = useAuth()
+  const supabase = createSupabaseClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
-    // Dans une implémentation réelle, ceci serait connecté à une API d'authentification
-    // Pour l'instant, nous simulons une connexion simple
     try {
-      // Simulation d'authentification - à remplacer par une vraie API
-      if (email && password) {
-        // Rediriger vers le tableau de bord approprié selon le rôle
-        // Ceci serait normalement déterminé par le backend
-        if (email.includes("admin")) {
-          router.push("/admin/dashboard")
-        } else if (email.includes("berth")) {
-          router.push("/berth-planner/dashboard")
-        } else if (email.includes("yard")) {
-          router.push("/yard-planner/dashboard")
-        } else if (email.includes("operations")) {
-          router.push("/operations-manager/dashboard")
-        } else if (email.includes("doc")) {
-          router.push("/documentation/dashboard")
-        } else if (email.includes("client")) {
-          router.push("/client/dashboard")
+      const { error, data } = await signIn(email, password)
+
+      if (error) {
+        setError(error.message)
+        return
+      }
+
+      if (data?.user) {
+        // Récupérer le profil pour déterminer le rôle
+        const { data: profileData } = await supabase.from("profiles").select("role").eq("id", data.user.id).single()
+
+        if (profileData) {
+          // Rediriger vers le tableau de bord approprié selon le rôle
+          switch (profileData.role) {
+            case "admin":
+              router.push("/admin/dashboard")
+              break
+            case "berth_planner":
+              router.push("/berth-planner/dashboard")
+              break
+            case "yard_planner":
+              router.push("/yard-planner/dashboard")
+              break
+            case "operations_manager":
+              router.push("/operations-manager/dashboard")
+              break
+            case "documentation":
+              router.push("/documentation/dashboard")
+              break
+            case "client":
+              router.push("/client/dashboard")
+              break
+            default:
+              router.push("/")
+          }
         } else {
-          setError("Rôle non reconnu")
+          router.push("/")
         }
-      } else {
-        setError("Veuillez remplir tous les champs")
       }
     } catch (err) {
       setError("Erreur de connexion")
@@ -88,8 +107,8 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full">
-              Se connecter
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Connexion en cours..." : "Se connecter"}
             </Button>
           </form>
         </CardContent>

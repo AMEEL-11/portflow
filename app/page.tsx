@@ -1,6 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { EnvChecker } from "@/components/env-checker"
 
 export default function Home() {
   return (
@@ -17,6 +18,9 @@ export default function Home() {
         </div>
       </header>
       <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-6">
+        {/* Composant qui vérifie les variables d'environnement côté client */}
+        <EnvChecker />
+
         <div className="relative w-full max-w-5xl aspect-[16/9] overflow-hidden rounded-lg">
           <Image src="/port-image.jpg" alt="Image du port" fill className="object-cover" priority />
         </div>
