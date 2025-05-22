@@ -1,0 +1,168 @@
+<div class="client-dashboard">
+    <div class="dashboard-header">
+      <h1><i class="fas fa-user-tie"></i> Espace Client</h1>
+      <div class="header-actions">
+        <div class="user-info">
+          <span>{{ currentUser?.firstName }} {{ currentUser?.lastName }}</span>
+        </div>
+        <button class="logout-btn" (click)="logout()">Déconnexion</button>
+      </div>
+    </div>
+  
+    <div class="dashboard-content">
+      <!-- Mes Conteneurs -->
+      <div class="my-containers-section">
+        <div class="section-header">
+          <h2>Mes Conteneurs</h2>
+          <div class="container-stats">
+            <div class="stat-item">
+              <span class="stat-value">{{ totalContainers }}</span>
+              <span class="stat-label">Total</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{ containersInTransit }}</span>
+              <span class="stat-label">En Transit</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-value">{{ containersStored }}</span>
+              <span class="stat-label">Stockés</span>
+            </div>
+          </div>
+        </div>
+  
+        <div class="containers-filter">
+          <input type="text" placeholder="Rechercher par numéro..." [(ngModel)]="containerFilter">
+          <select [(ngModel)]="statusFilter">
+            <option value="">Tous les statuts</option>
+            <option value="IN_TRANSIT">En Transit</option>
+            <option value="STORED">Stocké</option>
+            <option value="LOADING">Chargement</option>
+            <option value="UNLOADING">Déchargement</option>
+            <option value="DELIVERED">Livré</option>
+          </select>
+        </div>
+  
+        <div class="containers-grid">
+          <div class="container-card" *ngFor="let container of filteredClientContainers">
+            <div class="container-header">
+              <h4>{{ container.containerNumber }}</h4>
+              <span class="status-badge" [ngClass]="'status-' + container.status.toLowerCase()">
+                {{ getContainerStatusLabel(container.status) }}
+              </span>
+            </div>
+            
+            <div class="container-details">
+              <div class="detail-row">
+                <span class="label">Type:</span>
+                <span class="value">{{ container.containerType }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Poids:</span>
+                <span class="value">{{ container.weight }} T</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Arrivée:</span>
+                <span class="value">{{ container.arrivalDate | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="detail-row" *ngIf="container.storageZone">
+                <span class="label">Zone:</span>
+                <span class="value">{{ container.storageZone.name }}</span>
+              </div>
+            </div>
+            
+            <div class="container-actions">
+              <button class="track-btn" (click)="trackContainer(container)">
+                <i class="fas fa-route"></i> Suivre
+              </button>
+              <button class="history-btn" (click)="showContainerHistory(container)">
+                <i class="fas fa-history"></i> Historique
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Suivi en temps réel -->
+      <div class="tracking-section" *ngIf="trackedContainer">
+        <h2>Suivi en Temps Réel - {{ trackedContainer.containerNumber }}</h2>
+        <div class="tracking-map">
+          <div id="trackingMap" style="height: 400px;"></div>
+        </div>
+        
+        <div class="tracking-timeline">
+          <div class="timeline-item" *ngFor="let event of containerTimeline" [class.completed]="event.completed">
+            <div class="timeline-icon">
+              <i class="fas" [ngClass]="event.icon"></i>
+            </div>
+            <div class="timeline-content">
+              <h4>{{ event.title }}</h4>
+              <p>{{ event.description }}</p>
+              <small *ngIf="event.date">{{ event.date | date:'dd/MM/yyyy HH:mm' }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Modal Historique Conteneur -->
+    <div class="modal" *ngIf="showHistoryModal">
+      <div class="modal-content large">
+        <div class="modal-header">
+          <h3>Historique - {{ selectedContainer?.containerNumber }}</h3>
+          <button class="close-btn" (click)="closeHistoryModal()">×</button>
+        </div>
+        
+        <div class="history-content">
+          <div class="history-summary">
+            <div class="summary-item">
+              <span class="label">Date d'arrivée:</span>
+              <span class="value">{{ selectedContainer?.arrivalDate | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Temps au port:</span>
+              <span class="value">{{ calculatePortTime(selectedContainer) }} jours</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Mouvements:</span>
+              <span class="value">{{ selectedContainer?.movements?.length || 0 }}</span>
+            </div>
+          </div>
+          
+          <div class="movements-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Action</th>
+                  <th>Localisation</th>
+                  <th>Opérateur</th>
+                  <th>Commentaires</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let movement of selectedContainer?.movements">
+                  <td>{{ movement.timestamp | date:'dd/MM/yyyy HH:mm' }}</td>
+                  <td>{{ movement.action }}</td>
+                  <td>{{ movement.location }}</td>
+                  <td>{{ movement.operator }}</td>
+                  <td>{{ movement.comments }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="history-chart">
+            <h4>Graphique des Mouvements</h4>
+            <canvas id="movementChart" width="400" height="200"></canvas>
+          </div>
+        </div>
+        
+        <div class="modal-actions">
+          <button class="download-btn" (click)="downloadHistory()">
+            <i class="fas fa-download"></i> Télécharger PDF
+          </button>
+          <button class="close-btn" (click)="closeHistoryModal()">Fermer</button>
+        </div>
+      </div>
+    </div>
+  </div>

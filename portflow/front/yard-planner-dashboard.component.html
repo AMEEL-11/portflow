@@ -1,0 +1,218 @@
+<div class="yard-planner-dashboard">
+    <div class="dashboard-header">
+      <h1><i class="fas fa-warehouse"></i> Yard Planner</h1>
+      <div class="header-actions">
+        <button class="alerts-btn" [class.has-alerts]="storageAlerts.length > 0">
+          <i class="fas fa-bell"></i>
+          <span class="alert-count" *ngIf="storageAlerts.length > 0">{{ storageAlerts.length }}</span>
+        </button>
+        <button class="logout-btn" (click)="logout()">Déconnexion</button>
+      </div>
+    </div>
+  
+    <div class="dashboard-content">
+      <!-- Alertes Stockage -->
+      <div class="storage-alerts" *ngIf="storageAlerts.length > 0">
+        <h3>Alertes de Stockage</h3>
+        <div class="alert-item" *ngFor="let alert of storageAlerts" [ngClass]="'alert-' + alert.priority.toLowerCase()">
+          <i class="fas fa-exclamation-circle"></i>
+          <div class="alert-content">
+            <h4>{{ alert.title }}</h4>
+            <p>{{ alert.message }}</p>
+          </div>
+          <button class="resolve-alert-btn" (click)="resolveAlert(alert.id)">
+            <i class="fas fa-check"></i>
+          </button>
+        </div>
+      </div>
+  
+      <!-- Navires Planifiés -->
+      <div class="planned-ships-section">
+        <h2>Navires Planifiés</h2>
+        <div class="ships-grid">
+          <div class="ship-card" *ngFor="let escale of plannedEscales" [class.needs-allocation]="!escale.storageAllocated">
+            <div class="ship-header">
+              <h4>{{ escale.ship.name }}</h4>
+              <span class="eta">ETA: {{ escale.scheduledArrival | date:'dd/MM HH:mm' }}</span>
+            </div>
+            
+            <div class="containers-info">
+              <p><i class="fas fa-box"></i> {{ escale.containers.length }} conteneurs</p>
+              <p><i class="fas fa-weight-hanging"></i> {{ getTotalWeight(escale.containers) }} tonnes</p>
+            </div>
+            
+            <div class="allocation-section">
+              <div class="suggested-allocation" *ngIf="escale.suggestedAllocation">
+                <h5>Allocation Suggérée:</h5>
+                <p><strong>Zone:</strong> {{ escale.suggestedAllocation.zone.name }}</p>
+                <p><strong>Blocks:</strong> {{ escale.suggestedAllocation.positions.length }}</p>
+                <p><strong>Score d'optimisation:</strong> {{ escale.suggestedAllocation.score }}%</p>
+                
+                <div class="allocation-actions">
+                  <button class="accept-btn" (click)="acceptAllocation(escale)">
+                    <i class="fas fa-check"></i> Accepter
+                  </button>
+                  <button class="manual-btn" (click)="openManualAllocation(escale)">
+                    <i class="fas fa-hand-pointer"></i> Choisir Manuellement
+                  </button>
+                </div>
+              </div>
+              
+              <button class="suggest-btn" *ngIf="!escale.suggestedAllocation" (click)="suggestAllocation(escale)">
+                <i class="fas fa-magic"></i> Suggérer Emplacement
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Carte des Zones de Stockage -->
+      <div class="storage-map-section">
+        <h2>Zones de Stockage</h2>
+        <div class="map-controls">
+          <div class="legend">
+            <div class="legend-item">
+              <div class="color-box available"></div>
+              <span>Disponible</span>
+            </div>
+            <div class="legend-item">
+              <div class="color-box reserved"></div>
+              <span>Réservé</span>
+            </div>
+            <div class="legend-item">
+              <div class="color-box occupied"></div>
+              <span>Occupé</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="storage-grid">
+          <div class="zone-card" *ngFor="let zone of storageZones" 
+               [ngClass]="getZoneStatusClass(zone)"
+               (click)="selectZone(zone)">
+            <div class="zone-header">
+              <h4>{{ zone.name }}</h4>
+              <div class="occupancy-rate">
+                {{ getOccupancyRate(zone) }}%
+              </div>
+            </div>
+            
+            <div class="zone-stats">
+              <div class="stat">
+                <span class="label">Capacité:</span>
+                <span class="value">{{ zone.totalCapacity }}</span>
+              </div>
+              <div class="stat">
+                <span class="label">Occupé:</span>
+                <span class="value">{{ zone.currentOccupancy }}</span>
+              </div>
+              <div class="stat">
+                <span class="label">Réservé:</span>
+                <span class="value">{{ zone.reservedSlots }}</span>
+              </div>
+            </div>
+            
+            <div class="zone-visual">
+              <div class="occupancy-bar">
+                <div class="occupied-portion" 
+                     [style.width.%]="(zone.currentOccupancy / zone.totalCapacity) * 100"></div>
+                <div class="reserved-portion" 
+                     [style.width.%]="(zone.reservedSlots / zone.totalCapacity) * 100"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Conteneurs Stockés -->
+      <div class="stored-containers-section">
+        <h2>Conteneurs en Stock</h2>
+        <div class="containers-filter">
+          <input type="text" placeholder="Rechercher par numéro..." [(ngModel)]="containerSearchTerm">
+          <select [(ngModel)]="selectedZoneFilter">
+            <option value="">Toutes les zones</option>
+            <option *ngFor="let zone of storageZones" [value]="zone.id">{{ zone.name }}</option>
+          </select>
+        </div>
+        
+        <div class="containers-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Numéro</th>
+                <th>Zone</th>
+                <th>Position</th>
+                <th>Type</th>
+                <th>Poids</th>
+                <th>Date d'arrivée</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let container of filteredContainers">
+                <td>{{ container.containerNumber }}</td>
+                <td>{{ container.storageZone?.name }}</td>
+                <td>B{{ container.block }}-{{ container.bay }}-{{ container.row }}-{{ container.tier }}</td>
+                <td>{{ container.containerType }}</td>
+                <td>{{ container.weight }} T</td>
+                <td>{{ container.arrivalDate | date:'dd/MM/yyyy' }}</td>
+                <td>
+                  <span class="status-badge" [ngClass]="'status-' + container.status.toLowerCase()">
+                    {{ getContainerStatusLabel(container.status) }}
+                  </span>
+                </td>
+                <td>
+                  <button class="move-btn" (click)="moveContainer(container)">
+                    <i class="fas fa-arrows-alt"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Modal Allocation Manuelle -->
+    <div class="modal" *ngIf="showManualAllocationModal">
+      <div class="modal-content large">
+        <div class="modal-header">
+          <h3>Allocation Manuelle - {{ selectedEscale?.ship.name }}</h3>
+          <button class="close-btn" (click)="closeManualAllocation()">×</button>
+        </div>
+        
+        <div class="manual-allocation-content">
+          <div class="zone-selector">
+            <h4>Sélectionner une Zone</h4>
+            <div class="zones-grid">
+              <div class="zone-option" *ngFor="let zone of availableZones" 
+                   [class.selected]="selectedManualZone?.id === zone.id"
+                   (click)="selectManualZone(zone)">
+                <h5>{{ zone.name }}</h5>
+                <p>Disponible: {{ zone.totalCapacity - zone.currentOccupancy - zone.reservedSlots }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="position-selector" *ngIf="selectedManualZone">
+            <h4>Positions Suggérées</h4>
+            <div class="positions-grid">
+              <div class="position-option" *ngFor="let position of suggestedPositions"
+                   (click)="selectPosition(position)">
+                <p>Block {{ position.block }}, Bay {{ position.bay }}</p>
+                <p>{{ position.availableSlots }} emplacements</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-actions">
+          <button class="cancel-btn" (click)="closeManualAllocation()">Annuler</button>
+          <button class="confirm-btn" [disabled]="!selectedPosition" (click)="confirmManualAllocation()">
+            Confirmer Allocation
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>

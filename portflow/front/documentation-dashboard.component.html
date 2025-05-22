@@ -1,0 +1,64 @@
+<div class="documentation-dashboard">
+    <div class="dashboard-header">
+      <h1><i class="fas fa-chart-bar"></i> Service Documentation</h1>
+      <div class="header-actions">
+        <button class="generate-report-btn" (click)="openReportModal()">
+          <i class="fas fa-file-alt"></i> Générer Rapport
+        </button>
+        <button class="logout-btn" (click)="logout()">Déconnexion</button>
+      </div>
+    </div>
+  
+    <div class="dashboard-content">
+      <!-- Tableau de Bord KPIs -->
+      <div class="kpis-dashboard-section">
+        <h2>Tableau de Bord des Activités</h2>
+        
+        <!-- KPIs Principaux -->
+        <div class="main-kpis">
+          <div class="kpi-widget">
+            <div class="kpi-header">
+              <h3>Navires Traités</h3>
+              <i class="fas fa-ship"></i>
+            </div>
+            <div class="kpi-value">{{ monthlyKPIs.shipsHandled }}</div>
+            <div class="kpi-trend" [ngClass]="monthlyKPIs.shipsHandledTrend > 0 ? 'positive' : 'negative'">
+              <i class="fas" [ngClass]="monthlyKPIs.shipsHandledTrend > 0 ? 'fa-arrow-up' : 'fa-arrow-down'"></i>
+              {{ Math.abs(monthlyKPIs.shipsHandledTrend) }}% vs mois dernier
+            </div>
+          </div>
+          
+          <div class="kpi-widget">
+            <div class="kpi-header">
+              <h3>Conteneurs Traités</h3>
+              <i class="fas fa-boxes"></i>
+            </div>
+            <div class="kpi-value">{{ monthlyKPIs.containersHandled | number }}</div>
+            <div class="kpi-trend" [ngClass]="monthlyKPIs.containersHandledTrend > 0 ? 'positive' : 'negative'">
+              <i class="fas" [ngClass]="monthlyKPIs.containersHandledTrend > 0 ? 'fa-arrow-up' : 'fa-arrow-down'"></i>
+              {{ Math.abs(monthlyKPIs.containersHandledTrend) }}% vs mois dernier
+            </div>
+          </div>
+          
+          <div class="kpi-widget">
+            <div class="kpi-header">
+              <h3>Temps d'Attente Moyen</h3>
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="kpi-value">{{ monthlyKPIs.averageWaitTime }}h</div>
+            <div class="kpi-trend" [ngClass]="monthlyKPIs.waitTimeTrend < 0 ? 'positive' : 'negative'">
+              <i class="fas" [ngClass]="monthlyKPIs.waitTimeTrend < 0 ? 'fa-arrow-down' : 'fa-arrow-up'"></i>
+              {{ Math.abs(monthlyKPIs.waitTimeTrend) }}% vs mois dernier
+            </div>
+          </div>
+          
+          <div class="kpi-widget">
+            <div class="kpi-header">
+              <h3>Taux d'Occupation</h3>
+              <i class="fas fa-warehouse"></i>
+            </div>
+            <div class="kpi-value">{{ monthlyKPIs.occupancyRate }}%</div>
+            // ==== APP.COMPONENT.HTML ====
+  <div class="app-container">
+    <router-outlet></router-outlet>
+  </div>
