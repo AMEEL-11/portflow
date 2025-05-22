@@ -1,0 +1,88 @@
+<div class="berth-planner-dashboard">
+    <div class="dashboard-header">
+      <h1><i class="fas fa-anchor"></i> Berth Planner</h1>
+      <div class="header-actions">
+        <button class="alerts-btn" [class.has-alerts]="alerts.length > 0">
+          <i class="fas fa-bell"></i>
+          <span class="alert-count" *ngIf="alerts.length > 0">{{ alerts.length }}</span>
+        </button>
+        <button class="logout-btn" (click)="logout()">Déconnexion</button>
+      </div>
+    </div>
+  
+    <div class="dashboard-content">
+      <!-- Alertes -->
+      <div class="alerts-section" *ngIf="alerts.length > 0">
+        <h3>Alertes Actives</h3>
+        <div class="alert-item" *ngFor="let alert of alerts" [ngClass]="'alert-' + alert.priority.toLowerCase()">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div class="alert-content">
+            <h4>{{ alert.title }}</h4>
+            <p>{{ alert.message }}</p>
+            <small>{{ alert.createdAt | date:'dd/MM/yyyy HH:mm' }}</small>
+          </div>
+          <button class="resolve-alert-btn" (click)="resolveAlert(alert.id)">
+            <i class="fas fa-check"></i>
+          </button>
+        </div>
+      </div>
+  
+      <!-- Planification des Escales -->
+      <div class="escales-section">
+        <div class="section-header">
+          <h2>Planification des Escales</h2>
+          <button class="add-escale-btn" (click)="openEscaleModal()">
+            <i class="fas fa-plus"></i> Nouvelle Escale
+          </button>
+        </div>
+  
+        <div class="escales-calendar">
+          <full-calendar [options]="calendarOptions"></full-calendar>
+        </div>
+      </div>
+  
+      <!-- Suivi des Navires (Carte Monde) -->
+      <div class="ship-tracking-section">
+        <h2>Suivi des Navires</h2>
+        <div class="world-map">
+          <div id="worldMap" style="height: 400px;"></div>
+        </div>
+        
+        <div class="ships-list">
+          <div class="ship-card" *ngFor="let ship of trackedShips">
+            <div class="ship-info">
+              <h4>{{ ship.name }}</h4>
+              <p>IMO: {{ ship.imo }}</p>
+              <p>Vitesse: {{ ship.speed }} nœuds</p>
+              <p>ETA: {{ ship.eta | date:'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+            <div class="ship-status" [ngClass]="'status-' + ship.status.toLowerCase()">
+              {{ getStatusLabel(ship.status) }}
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Allocation des Ressources -->
+      <div class="resources-section">
+        <h2>Ressources Portuaires</h2>
+        <div class="resources-grid">
+          <div class="resource-card" *ngFor="let resource of portResources">
+            <div class="resource-icon">
+              <i class="fas" [ngClass]="getResourceIcon(resource.type)"></i>
+            </div>
+            <div class="resource-info">
+              <h4>{{ resource.name }}</h4>
+              <p>Type: {{ resource.type }}</p>
+              <div class="resource-status" [ngClass]="resource.available ? 'available' : 'unavailable'">
+                {{ resource.available ? 'Disponible' : 'Indisponible' }}
+              </div>
+            </div>
+            <button class="allocate-btn" [disabled]="!resource.available" (click)="allocateResource(resource)">
+              Allouer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
