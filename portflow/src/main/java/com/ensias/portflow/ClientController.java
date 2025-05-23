@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/client")
 @CrossOrigin(origins = "http://localhost:4200")
@@ -27,6 +29,24 @@ public class ClientController {
         List<Container> containers = containerRepository.findByClientId(clientId);
         return ResponseEntity.ok(containers);
     }
+    
+    
+    @PostMapping("/users")
+    public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserRequest request) {
+        try {
+            User user = authService.createUser(
+                request.getEmail(),
+                request.getPassword(),
+                request.getRole(),
+                request.getFirstName(),
+                request.getLastName()
+            );
+            return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
     
     @GetMapping("/containers/{containerNumber}/track")
     public ResponseEntity<ContainerTrackingResponse> trackContainer(@PathVariable String containerNumber, 
