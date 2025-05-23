@@ -1,5 +1,0 @@
-package com.ensias.portflow;
-
-public enum ContainerType {
-	STANDARD_20FT, STANDARD_40FT, HIGH_CUBE_40FT, REFRIGERATED_20FT, REFRIGERATED_40FT, OPEN_TOP, FLAT_RACK
-}

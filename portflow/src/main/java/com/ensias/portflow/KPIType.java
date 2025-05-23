@@ -1,6 +1,0 @@
-package com.ensias.portflow;
-
-public enum KPIType {
-    AVERAGE_WAITING_TIME, STORAGE_OCCUPANCY_RATE, CONTAINERS_PER_DAY, BERTH_PRODUCTIVITY, DWELL_TIME
-}
-
