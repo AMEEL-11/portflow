@@ -1,0 +1,32 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/portflow
+    username: postgres
+    password: highlevel
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  sql:
+    init:
+      mode: always
+      continue-on-error: true
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.ensias.portflow2: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
